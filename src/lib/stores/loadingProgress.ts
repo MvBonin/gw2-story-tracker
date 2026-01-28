@@ -4,6 +4,8 @@ export interface LoadingStep {
 	id: string;
 	label: string;
 	status: 'pending' | 'loading' | 'completed' | 'error';
+	current?: number;
+	total?: number;
 }
 
 export interface LoadingProgress {
@@ -75,6 +77,29 @@ function createLoadingProgressStore() {
 					currentStep: null,
 					steps,
 					overallProgress: state.overallProgress
+				};
+			});
+		},
+		setStepProgress: (stepId: string, current: number, total: number) => {
+			update((state) => {
+				const steps = state.steps.map((step) =>
+					step.id === stepId
+						? { ...step, status: 'loading' as const, current, total }
+						: step
+				);
+				const currentStepIndex = steps.findIndex((s) => s.id === stepId);
+				
+				// Berechne Progress basierend auf Step-Position und innerhalb des Steps
+				const stepProgress = total > 0 ? (current / total) * 100 : 0;
+				const stepWeight = 1 / steps.length;
+				const baseProgress = (currentStepIndex / steps.length) * 100;
+				const stepContribution = stepProgress * stepWeight;
+				const overallProgress = baseProgress + stepContribution;
+
+				return {
+					currentStep: stepId,
+					steps,
+					overallProgress: Math.min(100, overallProgress)
 				};
 			});
 		},

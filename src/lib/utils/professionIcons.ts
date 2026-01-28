@@ -33,3 +33,4 @@ export function getProfessionIcon(profession: string): string | null {
 }
 
 
+

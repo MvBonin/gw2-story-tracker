@@ -137,20 +137,51 @@ export async function getCharacterDetails(apiKey: string, characterName: string)
 }
 
 /**
- * Holt alle Charakter-Details (mit Caching)
+ * Extrahiert nur die benötigten Felder aus einem vollständigen Character-Objekt
+ * Reduziert die Datenmenge und verbessert die Performance
  */
-export async function getAllCharacterDetails(apiKey: string, forceRefresh = false): Promise<Character[]> {
+function getCharacterBasicInfo(fullCharacter: any): Character {
+	return {
+		name: fullCharacter.name,
+		profession: fullCharacter.profession,
+		level: fullCharacter.level,
+		race: fullCharacter.race,
+		gender: fullCharacter.gender || '',
+		created: fullCharacter.created || ''
+	};
+}
+
+/**
+ * Holt alle Charakter-Details (mit Caching)
+ * Optimiert: Lädt nur die benötigten Felder (name, profession, level, race)
+ * @param onProgress Optionaler Callback für Progress-Updates: (current, total) => void
+ */
+export async function getAllCharacterDetails(
+	apiKey: string,
+	forceRefresh = false,
+	onProgress?: (current: number, total: number) => void
+): Promise<Character[]> {
 	return cached(
 		`character_details_${apiKey}`,
 		async () => {
 			try {
 				const characterNames = await getCharacters(apiKey, forceRefresh);
+				const total = characterNames.length;
 				
 				// Rate limiting: Warte 100ms zwischen Requests
 				const characters: Character[] = [];
-				for (const name of characterNames) {
-					const character = await getCharacterDetails(apiKey, name);
-					characters.push(character);
+				for (let i = 0; i < characterNames.length; i++) {
+					const name = characterNames[i];
+					const fullCharacter = await getCharacterDetails(apiKey, name);
+					// Extrahiere nur die benötigten Felder
+					const basicInfo = getCharacterBasicInfo(fullCharacter);
+					characters.push(basicInfo);
+					
+					// Progress-Update
+					if (onProgress) {
+						onProgress(i + 1, total);
+					}
+					
 					await new Promise((resolve) => setTimeout(resolve, 100));
 				}
 
@@ -249,11 +280,13 @@ export async function getCharacterQuests(
 
 /**
  * Holt Quests für alle Charaktere
+ * @param onProgress Optionaler Callback für Progress-Updates: (current, total) => void
  */
 export async function getAllCharacterQuests(
 	apiKey: string,
 	characterNames: string[],
-	forceRefresh = false
+	forceRefresh = false,
+	onProgress?: (current: number, total: number) => void
 ): Promise<Map<string, number[]>> {
 	const cacheKey = `all_character_quests_${apiKey}`;
 	
@@ -266,11 +299,19 @@ export async function getAllCharacterQuests(
 	}
 
 	const quests = new Map<string, number[]>();
+	const total = characterNames.length;
 
 	// Rate limiting: Warte 100ms zwischen Requests
-	for (const name of characterNames) {
+	for (let i = 0; i < characterNames.length; i++) {
+		const name = characterNames[i];
 		const characterQuests = await getCharacterQuests(apiKey, name, forceRefresh);
 		quests.set(name, characterQuests);
+		
+		// Progress-Update
+		if (onProgress) {
+			onProgress(i + 1, total);
+		}
+		
 		await new Promise((resolve) => setTimeout(resolve, 100));
 	}
 

@@ -47,13 +47,26 @@
 			loadingProgressStore.setStepLoading('characters');
 			const characterNames = await getCharacters(apiKey);
 			allCharacters = characterNames;
-			const characters = await getAllCharacterDetails(apiKey);
+			const characters = await getAllCharacterDetails(
+				apiKey,
+				false,
+				(current, total) => {
+					loadingProgressStore.setStepProgress('characters', current, total);
+				}
+			);
 			characterDetails = new Map(characters.map((c) => [c.name, c]));
 			loadingProgressStore.setStepCompleted('characters');
 
 			// Schritt 2: Lade Quests für alle Charaktere (Character-spezifische Story-Completion)
 			loadingProgressStore.setStepLoading('achievements');
-			characterQuests = await getAllCharacterQuests(apiKey, characterNames);
+			characterQuests = await getAllCharacterQuests(
+				apiKey,
+				characterNames,
+				false,
+				(current, total) => {
+					loadingProgressStore.setStepProgress('achievements', current, total);
+				}
+			);
 			loadingProgressStore.setStepCompleted('achievements');
 
 			// Schritt 3: Lade Story- und Season-Details live von der API

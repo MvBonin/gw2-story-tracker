@@ -65,6 +65,9 @@
 					class="text-sm {step.status === 'pending' ? 'opacity-60' : ''} {step.status === 'loading' ? 'text-primary' : ''} {step.status === 'completed' ? 'text-success' : ''} {step.status === 'error' ? 'text-error' : ''}"
 				>
 					{step.label}
+					{#if step.status === 'loading' && step.current !== undefined && step.total !== undefined}
+						<span class="opacity-70"> {step.current}/{step.total}</span>
+					{/if}
 				</span>
 			</div>
 		{/each}
