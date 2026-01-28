@@ -4,8 +4,9 @@
 	import type { Character } from '$lib/api/gw2';
 	import type { PersonalStoryPhaseProgress } from '$lib/utils/personalStoryProgress';
 	import { getSeasonBadgeLabel, getSeasonMasteryIcon } from '$lib/utils/seasonLabels';
-	import { PERSONAL_STORY_SEASON_ID } from '$lib/utils/personalStoryPhases';
+	import { PERSONAL_STORY_SEASON_ID, PERSONAL_STORY_PHASES } from '$lib/utils/personalStoryPhases';
 	import { isStoryUndetectable } from '$lib/utils/storyStatus';
+	import { loadPersonalStoryPhase, ensurePersonalStoryDataLoaded } from '$lib/utils/personalStoryLoader';
 	import StoryItem from './StoryItem.svelte';
 	import PersonalStoryPhase from './PersonalStoryPhase.svelte';
 
@@ -14,10 +15,59 @@
 		seasons: Season[];
 		allCharacters?: string[];
 		characterDetails?: Map<string, Character>;
-		personalStoryPhases?: PersonalStoryPhaseProgress[];
+		characterQuests: Map<string, number[]>;
 	}
 
-	let { storyProgress, seasons, allCharacters = [], characterDetails = new Map(), personalStoryPhases = [] }: Props = $props();
+	let { storyProgress, seasons, allCharacters = [], characterDetails = new Map(), characterQuests }: Props = $props();
+
+	// State für geladene Personal Story Phasen
+	let loadedPhases = $state<Map<number, PersonalStoryPhaseProgress>>(new Map());
+	let loadingPhases = $state<Set<number>>(new Set());
+	let allPhasesLoaded = $state(false);
+
+	// Lade alle Phasen beim ersten Aufklappen der Personal Story Season
+	async function ensureAllPhasesLoaded() {
+		if (allPhasesLoaded) return;
+
+		loadingPhases.add(-1); // Flag für "alle Phasen werden geladen"
+		try {
+			const phases = await ensurePersonalStoryDataLoaded(characterQuests);
+			const phaseMap = new Map<number, PersonalStoryPhaseProgress>();
+			for (const phase of phases) {
+				phaseMap.set(phase.phaseLevel, phase);
+			}
+			loadedPhases = phaseMap;
+			allPhasesLoaded = true;
+		} finally {
+			loadingPhases.delete(-1);
+		}
+	}
+
+	// Lade eine spezifische Phase
+	async function loadPhase(phaseLevel: number) {
+		if (loadedPhases.has(phaseLevel)) return;
+
+		loadingPhases.add(phaseLevel);
+		try {
+			// Stelle sicher, dass alle Phasen geladen sind (einmalig)
+			if (!allPhasesLoaded) {
+				await ensureAllPhasesLoaded();
+			} else {
+				// Falls die Phase noch nicht im Cache ist, lade sie einzeln
+				const phase = await loadPersonalStoryPhase(phaseLevel, characterQuests);
+				if (phase) {
+					loadedPhases.set(phaseLevel, phase);
+				}
+			}
+		} finally {
+			loadingPhases.delete(phaseLevel);
+		}
+	}
+
+	// Phasen-Level sortiert
+	const phaseLevels = Object.keys(PERSONAL_STORY_PHASES)
+		.map(Number)
+		.sort((a, b) => a - b);
 
 	// Erstelle Map von Season-ID zu Season für schnellen Zugriff
 	const seasonMap = new Map((seasons || []).map((s) => [s.id, s]));
@@ -66,8 +116,12 @@
 			{@const badgeLabel = getSeasonBadgeLabel(season)}
 			{@const masteryIcon = getSeasonMasteryIcon(season.id)}
 			
-			{@const totalQuests = isPersonalStory ? personalStoryPhases.reduce((sum, phase) => sum + phase.quests.length, 0) : 0}
-			{@const completedQuests = isPersonalStory ? personalStoryPhases.reduce((sum, phase) => sum + phase.quests.filter(q => q.completedBy.length > 0).length, 0) : 0}
+			{@const totalQuests = isPersonalStory && allPhasesLoaded 
+				? Array.from(loadedPhases.values()).reduce((sum, phase) => sum + phase.quests.length, 0) 
+				: 0}
+			{@const completedQuests = isPersonalStory && allPhasesLoaded
+				? Array.from(loadedPhases.values()).reduce((sum, phase) => sum + phase.quests.filter(q => q.completedBy.length > 0).length, 0)
+				: 0}
 			
 			{@const completedCount = !isPersonalStory ? sortedSeasonProgress.filter((sp) => sp.completedBy.length > 0).length : 0}
 			{@const totalCount = !isPersonalStory 
@@ -77,9 +131,16 @@
 				? (completedQuests === totalQuests && totalQuests > 0)
 				: (completedCount === totalCount && totalCount > 0)}
 
-			{#if (isPersonalStory && personalStoryPhases.length > 0) || (!isPersonalStory && sortedSeasonProgress.length > 0)}
+			{#if (isPersonalStory && phaseLevels.length > 0) || (!isPersonalStory && sortedSeasonProgress.length > 0)}
 				<div class="collapse collapse-arrow bg-base-200/50 shadow-sm rounded-lg">
-					<input type="checkbox" />
+					<input 
+						type="checkbox" 
+						onchange={(e) => {
+							if (e.currentTarget.checked && isPersonalStory && !allPhasesLoaded) {
+								ensureAllPhasesLoaded();
+							}
+						}}
+					/>
 					<div class="collapse-title text-lg font-medium">
 						<div class="flex items-center justify-between gap-4 w-full">
 							<div class="flex items-center gap-3 flex-1 min-w-0">
@@ -107,7 +168,11 @@
 							<!-- Progress -->
 							<span class="text-sm {isComplete ? 'text-success' : 'opacity-60'} flex-shrink-0">
 								{#if isPersonalStory}
-									{completedQuests} / {totalQuests} completed
+									{#if allPhasesLoaded}
+										{completedQuests} / {totalQuests} completed
+									{:else}
+										{phaseLevels.length} phases
+									{/if}
 								{:else}
 									{completedCount} / {totalCount} completed
 								{/if}
@@ -117,8 +182,38 @@
 					<div class="collapse-content">
 						{#if isPersonalStory}
 							<div class="pt-2 pb-2 px-1 space-y-2">
-								{#each personalStoryPhases as phase}
-									<PersonalStoryPhase {phase} {characterDetails} />
+								{#each phaseLevels as phaseLevel}
+									{@const phase = loadedPhases.get(phaseLevel)}
+									{@const isLoading = loadingPhases.has(phaseLevel) || loadingPhases.has(-1)}
+									{@const phaseName = PERSONAL_STORY_PHASES[phaseLevel] || `Level ${phaseLevel}`}
+									
+									<div class="collapse collapse-arrow bg-base-100/30 rounded-lg">
+										<input 
+											type="checkbox" 
+											onchange={(e) => {
+												if (e.currentTarget.checked && !phase && !isLoading) {
+													loadPhase(phaseLevel);
+												}
+											}}
+										/>
+										<div class="collapse-title text-base font-medium py-2">
+											Level {phaseLevel}: {phaseName}
+										</div>
+										<div class="collapse-content">
+											{#if isLoading}
+												<div class="py-4 px-2 flex items-center justify-center gap-2">
+													<span class="loading loading-spinner loading-sm"></span>
+													<span class="text-sm opacity-60">Loading quests...</span>
+												</div>
+											{:else if phase}
+												<PersonalStoryPhase {phase} {characterDetails} />
+											{:else}
+												<div class="py-2 px-2 text-sm opacity-50 italic">
+													Click to load quests
+												</div>
+											{/if}
+										</div>
+									</div>
 								{/each}
 							</div>
 						{:else}

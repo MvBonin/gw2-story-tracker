@@ -3,11 +3,9 @@
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { apiKeyStore } from '$lib/stores/apiKey';
-	import { getCharacters, getAllCharacterQuests, getAllCharacterDetails, getAllQuestIds, getAllQuestDetails, type Character, type Quest } from '$lib/api/gw2';
+	import { getCharacters, getAllCharacterQuests, getAllCharacterDetails, type Character } from '$lib/api/gw2';
 	import { getStoriesAndSeasons, type Season } from '$lib/api/stories';
 	import { mapStoryProgress } from '$lib/utils/storyProgress';
-	import { getQuestToStoryMap } from '$lib/api/questMapping';
-	import { createPersonalStoryProgress, type PersonalStoryPhaseProgress } from '$lib/utils/personalStoryProgress';
 	import { loadingProgressStore } from '$lib/stores/loadingProgress';
 	import type { StoryProgress } from '$lib/utils/storyProgress';
 	import StoryAccordion from '$lib/components/StoryAccordion.svelte';
@@ -18,7 +16,7 @@
 	let seasons: Season[] = [];
 	let allCharacters: string[] = [];
 	let characterDetails: Map<string, Character> = new Map();
-	let personalStoryPhases: PersonalStoryPhaseProgress[] = [];
+	let characterQuests: Map<string, number[]> = new Map();
 	let isLoading = true;
 	let error: string | null = null;
 
@@ -55,7 +53,7 @@
 
 			// Schritt 2: Lade Quests für alle Charaktere (Character-spezifische Story-Completion)
 			loadingProgressStore.setStepLoading('achievements');
-			const characterQuests = await getAllCharacterQuests(apiKey, characterNames);
+			characterQuests = await getAllCharacterQuests(apiKey, characterNames);
 			loadingProgressStore.setStepCompleted('achievements');
 
 			// Schritt 3: Lade Story- und Season-Details live von der API
@@ -64,23 +62,9 @@
 			seasons = loadedSeasons;
 			loadingProgressStore.setStepCompleted('stories');
 
-			// Schritt 4: Lade Quest-Details für Personal Story
+			// Schritt 4: Mappe Story-Fortschritt basierend auf Character-Quests (live)
+			// Personal Story wird jetzt lazy geladen beim Aufklappen einer Phase
 			loadingProgressStore.setStepLoading('mapping');
-			const questToStory = await getQuestToStoryMap();
-			const allQuestIds = await getAllQuestIds();
-			const allQuestDetails = await getAllQuestDetails(allQuestIds);
-			
-			// Filtere nur Personal Story Quests (Story ID 1)
-			const personalStoryQuestDetails = allQuestDetails.filter((q: Quest) => questToStory.get(q.id) === 1);
-			
-			// Erstelle Personal Story Progress
-			personalStoryPhases = createPersonalStoryProgress(
-				characterQuests,
-				personalStoryQuestDetails,
-				questToStory
-			);
-			
-			// Schritt 5: Mappe Story-Fortschritt basierend auf Character-Quests (live)
 			storyProgress = await mapStoryProgress(apiKey, characterQuests);
 			loadingProgressStore.setStepCompleted('mapping');
 		} catch (err) {
@@ -159,7 +143,7 @@
 					/>
 					<h2 class="text-2xl font-bold text-base-content">Stories</h2>
 				</div>
-				<StoryAccordion {storyProgress} {seasons} {allCharacters} {characterDetails} {personalStoryPhases} />
+				<StoryAccordion {storyProgress} {seasons} {allCharacters} {characterDetails} {characterQuests} />
 			</div>
 		{/if}
 	</div>

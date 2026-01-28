@@ -13,20 +13,22 @@ export interface PersonalStoryPhaseProgress {
 
 /**
  * Erstellt Personal Story Fortschritt gruppiert nach Phasen
- * Nur für Quests mit story === 1 (Personal Story)
+ * Filtert Quests basierend auf allen Personal Story Story-IDs (nicht nur Story ID 1)
  */
 export function createPersonalStoryProgress(
 	characterQuests: Map<string, number[]>,
 	questDetails: Quest[],
-	questToStory: Map<number, number>
+	questToStory: Map<number, number>,
+	personalStoryStoryIds: Set<number>
 ): PersonalStoryPhaseProgress[] {
 	// Erstelle Map: Quest ID -> Character Names
 	const questToCharacters = new Map<number, string[]>();
 	
 	for (const [characterName, questIds] of characterQuests.entries()) {
 		for (const questId of questIds) {
-			// Nur Personal Story Quests (Story ID 1)
-			if (questToStory.get(questId) === 1) {
+			// Nur Personal Story Quests (alle Story-IDs der Personal Story Season)
+			const storyId = questToStory.get(questId);
+			if (storyId !== undefined && personalStoryStoryIds.has(storyId)) {
 				if (!questToCharacters.has(questId)) {
 					questToCharacters.set(questId, []);
 				}
@@ -38,8 +40,9 @@ export function createPersonalStoryProgress(
 	// Erstelle Map: Quest ID -> Quest Detail (nur Personal Story Quests)
 	const questDetailMap = new Map<number, Quest>();
 	for (const quest of questDetails) {
-		// Nur Personal Story Quests (Story ID 1)
-		if (questToStory.get(quest.id) === 1) {
+		// Nur Personal Story Quests (alle Story-IDs der Personal Story Season)
+		const storyId = questToStory.get(quest.id);
+		if (storyId !== undefined && personalStoryStoryIds.has(storyId)) {
 			questDetailMap.set(quest.id, quest);
 		}
 	}

@@ -25,9 +25,10 @@
 
 	function acceptCookies() {
 		if (typeof window !== 'undefined') {
-			localStorage.setItem('cookieConsent', 'accepted');
-			cookieConsent = 'accepted';
+			// Update state first, then dispatch event
 			showBanner = false;
+			cookieConsent = 'accepted';
+			localStorage.setItem('cookieConsent', 'accepted');
 			// Dispatch custom event immediately
 			window.dispatchEvent(new CustomEvent('cookieConsentUpdate', { detail: 'accepted' }));
 		}
@@ -35,10 +36,10 @@
 
 	function rejectCookies() {
 		if (typeof window !== 'undefined') {
-			// Store rejection
-			localStorage.setItem('cookieConsent', 'rejected');
-			cookieConsent = 'rejected';
+			// Update state first, then dispatch event
 			showBanner = false;
+			cookieConsent = 'rejected';
+			localStorage.setItem('cookieConsent', 'rejected');
 			// Dispatch custom event immediately
 			window.dispatchEvent(new CustomEvent('cookieConsentUpdate', { detail: 'rejected' }));
 		}

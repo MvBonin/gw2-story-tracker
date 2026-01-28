@@ -12,13 +12,8 @@
 </script>
 
 <div class="py-2 px-3">
-	<!-- Phase Header -->
-	<div class="font-semibold text-base-content mb-2">
-		Level {phase.phaseLevel}: {phase.phaseName}
-	</div>
-	
 	<!-- Quests in dieser Phase -->
-	<div class="space-y-1.5 ml-4">
+	<div class="space-y-1.5">
 		{#each phase.quests as quest}
 			<div class="flex items-start gap-3 py-1.5 px-2 hover:bg-base-200/30 rounded transition-colors">
 				<!-- Quest Name -->
@@ -53,4 +48,5 @@
 		{/each}
 	</div>
 </div>
+
 
