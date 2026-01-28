@@ -11,6 +11,7 @@
 	import type { StoryProgress } from '$lib/utils/storyProgress';
 	import StoryAccordion from '$lib/components/StoryAccordion.svelte';
 	import LoadingProgress from '$lib/components/LoadingProgress.svelte';
+	import favicon from '$lib/assets/favicon.png';
 
 	let storyProgress: StoryProgress[] = [];
 	let seasons: Season[] = [];
@@ -107,15 +108,15 @@
 		<div class="flex-1">
 			<div class="flex items-center gap-3">
 				<img
-					src="https://wiki.guildwars2.com/wiki/Special:FilePath/Storyline_(interface).png"
-					alt="GW2 Storyline"
+					src={favicon}
+					alt="GW2 Story Tracker"
 					class="w-8 h-8"
 				/>
 				<span class="btn btn-ghost text-xl font-semibold">GW2 Story Tracker</span>
 			</div>
 		</div>
 		<div class="flex-none">
-			<button class="btn btn-ghost" on:click={handleLogout}>Logout</button>
+			<button class="btn btn-ghost" onclick={handleLogout}>Logout</button>
 		</div>
 	</div>
 
@@ -143,13 +144,20 @@
 				</svg>
 				<span>{error}</span>
 				<div class="flex-1"></div>
-				<button class="btn btn-sm btn-ghost" on:click={() => window.location.reload()}>
+				<button class="btn btn-sm btn-ghost" onclick={() => window.location.reload()}>
 					Try again
 				</button>
 			</div>
 		{:else}
 			<div class="bg-base-100/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-base-300">
-				<h2 class="text-2xl font-bold mb-6 text-base-content">Stories</h2>
+				<div class="flex items-center gap-3 mb-6">
+					<img
+						src="https://wiki.guildwars2.com/wiki/Special:FilePath/Storyline_(interface).png"
+						alt="GW2 Storyline"
+						class="w-8 h-8"
+					/>
+					<h2 class="text-2xl font-bold text-base-content">Stories</h2>
+				</div>
 				<StoryAccordion {storyProgress} {seasons} {allCharacters} {characterDetails} {personalStoryPhases} />
 			</div>
 		{/if}

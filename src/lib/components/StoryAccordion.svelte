@@ -5,6 +5,7 @@
 	import type { PersonalStoryPhaseProgress } from '$lib/utils/personalStoryProgress';
 	import { getSeasonBadgeLabel, getSeasonMasteryIcon } from '$lib/utils/seasonLabels';
 	import { PERSONAL_STORY_SEASON_ID } from '$lib/utils/personalStoryPhases';
+	import { isStoryUndetectable } from '$lib/utils/storyStatus';
 	import StoryItem from './StoryItem.svelte';
 	import PersonalStoryPhase from './PersonalStoryPhase.svelte';
 
@@ -67,8 +68,11 @@
 			
 			{@const totalQuests = isPersonalStory ? personalStoryPhases.reduce((sum, phase) => sum + phase.quests.length, 0) : 0}
 			{@const completedQuests = isPersonalStory ? personalStoryPhases.reduce((sum, phase) => sum + phase.quests.filter(q => q.completedBy.length > 0).length, 0) : 0}
+			
 			{@const completedCount = !isPersonalStory ? sortedSeasonProgress.filter((sp) => sp.completedBy.length > 0).length : 0}
-			{@const totalCount = !isPersonalStory ? sortedSeasonProgress.length : 0}
+			{@const totalCount = !isPersonalStory 
+				? sortedSeasonProgress.filter((sp) => !isStoryUndetectable(sp.story.id)).length 
+				: 0}
 			{@const isComplete = isPersonalStory 
 				? (completedQuests === totalQuests && totalQuests > 0)
 				: (completedCount === totalCount && totalCount > 0)}

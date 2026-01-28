@@ -2,11 +2,13 @@
 	import { onMount } from 'svelte';
 
 	let cookieConsent = $state<string | null>(null);
+	let showBanner = $state(true);
 
 	onMount(() => {
 		// Check if consent was already given
 		if (typeof window !== 'undefined') {
 			cookieConsent = localStorage.getItem('cookieConsent');
+			showBanner = cookieConsent === null;
 		}
 	});
 
@@ -14,6 +16,7 @@
 		if (typeof window !== 'undefined') {
 			localStorage.setItem('cookieConsent', 'accepted');
 			cookieConsent = 'accepted';
+			showBanner = false;
 		}
 	}
 
@@ -22,13 +25,20 @@
 			// Store rejection
 			localStorage.setItem('cookieConsent', 'rejected');
 			cookieConsent = 'rejected';
-			// Note: The app will still use localStorage for essential functionality (API key storage)
-			// but we've recorded the user's preference
+			showBanner = false;
+		}
+	}
+
+	export function showCookieSettings() {
+		if (typeof window !== 'undefined') {
+			localStorage.removeItem('cookieConsent');
+			cookieConsent = null;
+			showBanner = true;
 		}
 	}
 </script>
 
-{#if cookieConsent === null}
+{#if showBanner}
 	<div class="fixed bottom-0 left-0 right-0 z-50 bg-base-100 shadow-2xl border-t border-base-300 p-4">
 		<div class="container mx-auto max-w-4xl">
 			<div class="flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -45,10 +55,10 @@
 					</p>
 				</div>
 				<div class="flex gap-2 flex-shrink-0">
-					<button class="btn btn-sm btn-ghost" on:click={rejectCookies}>
+					<button class="btn btn-sm btn-ghost" onclick={rejectCookies}>
 						Reject
 					</button>
-					<button class="btn btn-sm btn-primary" on:click={acceptCookies}>
+					<button class="btn btn-sm btn-primary" onclick={acceptCookies}>
 						Accept
 					</button>
 				</div>

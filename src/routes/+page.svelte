@@ -4,26 +4,63 @@
 	import { apiKeyStore } from '$lib/stores/apiKey';
 	import { validateApiKey } from '$lib/api/gw2';
 	import { browser } from '$app/environment';
+	import { getCookieConsent } from '$lib/utils/cookieConsent';
+	import CookieBanner from '$lib/components/CookieBanner.svelte';
+	import favicon from '$lib/assets/favicon.png';
 
 	let apiKeyInput = '';
 	let errorMessage = '';
 	let isLoading = false;
+	let cookieBannerRef: CookieBanner | null = null;
+	let cookieConsent = $state<'accepted' | 'rejected' | null>(null);
+	let showBanner = $state(false);
 
-	// Prüfe beim Laden, ob bereits ein API Key vorhanden ist
+	// Check cookie consent status
 	onMount(() => {
 		if (browser) {
+			const updateConsent = () => {
+				const consent = getCookieConsent();
+				cookieConsent = consent;
+				showBanner = consent === null;
+			};
+			
+			updateConsent();
+			
 			apiKeyStore.subscribe((state) => {
 				if (state.isValid && state.key) {
-					// Redirect zur Hauptseite wenn bereits validiert
+					// Redirect to main page if already validated
 					goto('/stories');
 				}
 			});
+			
+			// Listen for storage changes (when cookie consent is updated)
+			const handleStorageChange = (e: StorageEvent) => {
+				if (e.key === 'cookieConsent') {
+					updateConsent();
+				}
+			};
+			
+			window.addEventListener('storage', handleStorageChange);
+			
+			// Also check periodically for same-tab changes
+			const interval = setInterval(updateConsent, 200);
+			
+			return () => {
+				window.removeEventListener('storage', handleStorageChange);
+				clearInterval(interval);
+			};
 		}
 	});
 
 	async function handleSubmit() {
 		if (!apiKeyInput.trim()) {
 			errorMessage = 'Please enter an API key';
+			return;
+		}
+
+		// Check if cookies are accepted
+		if (cookieConsent !== 'accepted') {
+			errorMessage = 'Please accept cookies to continue';
 			return;
 		}
 
@@ -52,22 +89,30 @@
 		}
 	}
 
+	function showCookieSettings() {
+		if (cookieBannerRef) {
+			cookieBannerRef.showCookieSettings();
+		}
+		showBanner = true;
+		cookieConsent = null;
+	}
+
 </script>
 
 	<div class="min-h-screen flex items-center justify-center bg-base-200 p-4">
 	<div class="card w-full max-w-md bg-base-100 shadow-xl">
 		<div class="card-body">
-			<div class="flex items-center justify-center gap-3 mb-4">
+			<div class="flex flex-col items-center mb-6">
 				<img
-					src="https://wiki.guildwars2.com/wiki/Special:FilePath/Storyline_(interface).png"
-					alt="GW2 Storyline"
-					class="w-10 h-10"
+					src={favicon}
+					alt="GW2 Story Tracker"
+					class="w-56 h-56 mb-4"
 				/>
-				<h2 class="card-title text-2xl">GW2 Story Tracker</h2>
+				<h2 class="card-title text-2xl mb-2">GW2 Story Tracker</h2>
+				<p class="text-center text-base-content/70">
+					Enter your Guild Wars 2 API key to view your story progress.
+				</p>
 			</div>
-			<p class="text-center text-base-content/70 mb-6">
-				Enter your Guild Wars 2 API key to view your story progress.
-			</p>
 
 			<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-4">
 				<div class="form-control">
@@ -79,7 +124,7 @@
 						placeholder="Your GW2 API Key"
 						class="input input-bordered w-full"
 						bind:value={apiKeyInput}
-						disabled={isLoading}
+						disabled={isLoading || cookieConsent !== 'accepted'}
 					/>
 					<label class="label">
 						<span class="label-text-alt">
@@ -115,16 +160,27 @@
 				{/if}
 
 				<div class="card-actions justify-end">
-					<button type="submit" class="btn btn-primary w-full" disabled={isLoading}>
-						{#if isLoading}
-							<span class="loading loading-spinner loading-sm"></span>
-							Validating...
-						{:else}
-							Validate
-						{/if}
-					</button>
+					{#if showBanner}
+						<button type="button" class="btn btn-primary w-full" disabled>
+							Please Accept Cookies first
+						</button>
+					{:else if cookieConsent === 'rejected'}
+						<button type="button" class="btn btn-primary w-full" onclick={showCookieSettings}>
+							Show Cookie Settings again
+						</button>
+					{:else}
+						<button type="submit" class="btn btn-primary w-full" disabled={isLoading || cookieConsent !== 'accepted'}>
+							{#if isLoading}
+								<span class="loading loading-spinner loading-sm"></span>
+								Validating...
+							{:else}
+								Validate
+							{/if}
+						</button>
+					{/if}
 				</div>
 			</form>
 		</div>
 	</div>
+	<CookieBanner bind:this={cookieBannerRef} />
 </div>
