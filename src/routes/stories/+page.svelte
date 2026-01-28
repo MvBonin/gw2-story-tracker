@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { apiKeyStore } from '$lib/stores/apiKey';
 	import { getCharacters, getAllCharacterQuests, getAllCharacterDetails, getAllQuestIds, getAllQuestDetails, type Character, type Quest } from '$lib/api/gw2';
 	import { getStoriesAndSeasons, type Season } from '$lib/api/stories';
@@ -36,7 +37,7 @@
 
 		if (!apiKey || !isValid) {
 			unsubscribe();
-			goto('/');
+			goto(`${base}/`);
 			return;
 		}
 
@@ -98,7 +99,7 @@
 
 	function handleLogout() {
 		apiKeyStore.clear();
-		goto('/');
+		goto(`${base}/`);
 	}
 </script>
 

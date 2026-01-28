@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 </script>
 
 <div class="min-h-screen bg-base-200 p-4">
 	<div class="container mx-auto max-w-4xl py-8">
 		<div class="bg-base-100 rounded-lg shadow-lg p-8">
 			<div class="mb-6">
-				<button class="btn btn-ghost btn-sm mb-4" onclick={() => goto('/')}>
+				<button class="btn btn-ghost btn-sm mb-4" onclick={() => goto(`${base}/`)}>
 					← Back to Login
 				</button>
 				<h1 class="text-4xl font-bold mb-2">Privacy Policy</h1>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { apiKeyStore } from '$lib/stores/apiKey';
 	import { validateApiKey } from '$lib/api/gw2';
 	import { browser } from '$app/environment';
@@ -29,7 +30,7 @@
 			apiKeyStore.subscribe((state) => {
 				if (state.isValid && state.key) {
 					// Redirect to main page if already validated
-					goto('/stories');
+					goto(`${base}/stories`, { invalidateAll: true });
 				}
 			});
 			
@@ -75,7 +76,7 @@
 				apiKeyStore.setKey(apiKeyInput.trim());
 				apiKeyStore.setValid(true);
 				// Redirect to main page
-				goto('/gw2-story-tracker/stories');
+				goto(`${base}/stories`, { invalidateAll: true });
 			} else {
 				errorMessage = 'Invalid API key. Please check your key.';
 				apiKeyStore.setError(errorMessage);
