@@ -358,6 +358,7 @@
 			{#if isStoriesLoading}
 				<div class="bg-base-100/50 backdrop-blur-sm rounded-lg shadow-lg p-6 mt-4 border border-base-300">
 					<h2 class="text-2xl font-bold mb-4">Loading story data...</h2>
+					<p class="text-sm text-base-content/70 mb-4">This may take some time depending on the number of characters you have since we need to load the data for each character seperately.</p>
 					<LoadingProgress />
 				</div>
 			{:else if storiesError}
