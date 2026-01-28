@@ -6,13 +6,11 @@
 	import { validateApiKey } from '$lib/api/gw2';
 	import { browser } from '$app/environment';
 	import { getCookieConsent } from '$lib/utils/cookieConsent';
-	import CookieBanner from '$lib/components/CookieBanner.svelte';
 	import favicon from '$lib/assets/favicon.png';
 
 	let apiKeyInput = '';
 	let errorMessage = '';
 	let isLoading = false;
-	let cookieBannerRef: CookieBanner | null = null;
 	let cookieConsent = $state<'accepted' | 'rejected' | null>(null);
 	let showBanner = $state(false);
 
@@ -34,21 +32,25 @@
 				}
 			});
 			
-			// Listen for storage changes (when cookie consent is updated)
+			// Listen for storage changes (when cookie consent is updated in other tabs)
 			const handleStorageChange = (e: StorageEvent) => {
 				if (e.key === 'cookieConsent') {
 					updateConsent();
 				}
 			};
 			
-			window.addEventListener('storage', handleStorageChange);
+			// Listen for custom events (when cookie consent is updated in same tab)
+			const handleCookieConsentUpdate = (e: CustomEvent) => {
+				cookieConsent = e.detail;
+				showBanner = e.detail === null;
+			};
 			
-			// Also check periodically for same-tab changes
-			const interval = setInterval(updateConsent, 200);
+			window.addEventListener('storage', handleStorageChange);
+			window.addEventListener('cookieConsentUpdate', handleCookieConsentUpdate as EventListener);
 			
 			return () => {
 				window.removeEventListener('storage', handleStorageChange);
-				clearInterval(interval);
+				window.removeEventListener('cookieConsentUpdate', handleCookieConsentUpdate as EventListener);
 			};
 		}
 	});
@@ -91,9 +93,8 @@
 	}
 
 	function showCookieSettings() {
-		if (cookieBannerRef) {
-			cookieBannerRef.showCookieSettings();
-		}
+		// Dispatch event to show cookie settings
+		window.dispatchEvent(new CustomEvent('showCookieSettings'));
 		showBanner = true;
 		cookieConsent = null;
 	}
@@ -183,5 +184,4 @@
 			</form>
 		</div>
 	</div>
-	<CookieBanner bind:this={cookieBannerRef} />
 </div>

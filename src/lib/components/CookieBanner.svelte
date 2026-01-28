@@ -9,6 +9,17 @@
 		if (typeof window !== 'undefined') {
 			cookieConsent = localStorage.getItem('cookieConsent');
 			showBanner = cookieConsent === null;
+			
+			// Listen for showCookieSettings event
+			const handleShowCookieSettings = () => {
+				showCookieSettings();
+			};
+			
+			window.addEventListener('showCookieSettings', handleShowCookieSettings);
+			
+			return () => {
+				window.removeEventListener('showCookieSettings', handleShowCookieSettings);
+			};
 		}
 	});
 
@@ -17,6 +28,8 @@
 			localStorage.setItem('cookieConsent', 'accepted');
 			cookieConsent = 'accepted';
 			showBanner = false;
+			// Dispatch custom event immediately
+			window.dispatchEvent(new CustomEvent('cookieConsentUpdate', { detail: 'accepted' }));
 		}
 	}
 
@@ -26,6 +39,8 @@
 			localStorage.setItem('cookieConsent', 'rejected');
 			cookieConsent = 'rejected';
 			showBanner = false;
+			// Dispatch custom event immediately
+			window.dispatchEvent(new CustomEvent('cookieConsentUpdate', { detail: 'rejected' }));
 		}
 	}
 
@@ -34,6 +49,7 @@
 			localStorage.removeItem('cookieConsent');
 			cookieConsent = null;
 			showBanner = true;
+			window.dispatchEvent(new CustomEvent('cookieConsentUpdate', { detail: null }));
 		}
 	}
 </script>
