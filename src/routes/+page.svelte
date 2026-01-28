@@ -75,7 +75,7 @@
 				apiKeyStore.setKey(apiKeyInput.trim());
 				apiKeyStore.setValid(true);
 				// Redirect to main page
-				goto('/stories');
+				goto('/gw2-story-tracker/stories');
 			} else {
 				errorMessage = 'Invalid API key. Please check your key.';
 				apiKeyStore.setError(errorMessage);

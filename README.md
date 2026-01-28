@@ -1,42 +1,135 @@
-# sv
+# GW2 Story Tracker
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A modern, client-side web application for tracking your Guild Wars 2 story progress across all your characters. Built with SvelteKit and powered by the official Guild Wars 2 API.
 
-## Creating a project
+🌐 **Live Application:** [https://mvbonin.github.io/gw2-story-tracker/](https://mvbonin.github.io/gw2-story-tracker/)
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Overview
 
-```sh
-# create a new project
-npx sv create my-app
-```
+GW2 Story Tracker helps you keep track of which story chapters you've completed across all your characters. Unlike other tools that rely on achievements, this application uses quest-based tracking for more accurate, character-specific progress monitoring.
 
-To recreate this project with the same configuration:
+### Key Features
 
-```sh
-# recreate this project
-npx sv create --template minimal --types ts --add tailwindcss="plugins:typography" sveltekit-adapter="adapter:static" mcp="ide:cursor+setup:remote" --install npm gw2story
-```
+- **Character-Specific Tracking**: See which characters have completed which story chapters
+- **Quest-Based Progress**: Uses the official GW2 quest system for accurate completion tracking
+- **Visual Progress Overview**: 
+  - Season-level accordion cards with completion counts
+  - Profession icons next to character names
+  - Mastery icons for each expansion/season
+  - Color-coded status badges (Completed, Not completed, Undetectable, Not yet available)
+- **Personal Story Support**: Special phase-based grouping for Personal Story (Origins, Orders of Tyria, etc.) TODO
+- **Privacy-First**: All data is stored locally in your browser - no server-side storage
+- **Open Source**: Full source code available on GitHub for transparency and customization
 
-## Developing
+## How It Works
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+1. **Enter Your API Key**: Get your Guild Wars 2 API key from [ArenaNet's official site](https://account.arena.net/applications)
+2. **Automatic Data Fetching**: The app fetches:
+   - Your character list and their professions
+   - Character-specific completed quests
+   - Story and season metadata from the GW2 API
+3. **Progress Mapping**: Stories are matched to quests to determine completion status per character
+4. **Visual Display**: Your progress is displayed in an organized, easy-to-scan format
 
-```sh
+## Story Status Types
+
+- **✅ Done**: Story completed by at least one character
+- **Not completed**: Story not yet completed by any character
+- **⚠️ Undetectable**: Story completion cannot be detected per character (e.g., HoT Episode 15 "Bitter Harvest")
+- **⏳ Not yet available**: Story quests not yet released in the API (e.g., some Visions of Eternity content)
+
+## Technical Details
+
+### Tech Stack
+
+- **Framework**: [SvelteKit](https://kit.svelte.dev/) with Svelte 5
+- **Styling**: [TailwindCSS](https://tailwindcss.com/) + [DaisyUI](https://daisyui.com/)
+- **Language**: TypeScript
+- **API**: Official [Guild Wars 2 API](https://wiki.guildwars2.com/wiki/API:Main)
+
+### Architecture
+
+- **Client-Side Only**: No backend server required
+- **Local Storage**: API keys and cached data stored in browser localStorage
+- **Dynamic Data**: All story/season data fetched live from GW2 API
+- **Quest Mapping**: Automatic quest-to-story mapping from API data
+
+### Data Privacy
+
+- **100% Local**: All data stored exclusively in your browser
+- **No Tracking**: No analytics, cookies, or third-party services
+- **API Key Security**: Your API key is only sent to official GW2 API endpoints
+- **Easy Deletion**: Logout button clears all stored data
+
+See the [Privacy Policy](/privacy) for detailed information.
+
+## Development
+
+### Prerequisites
+
+- Node.js 18+ and npm
+
+### Setup
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd gw2story
+
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
+# Build for production
 npm run build
+
+# Preview production build
+npm run preview
 ```
 
-You can preview the production build with `npm run preview`.
+### Project Structure
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```
+src/
+├── lib/
+│   ├── api/          # GW2 API integration
+│   ├── components/   # Svelte components
+│   ├── stores/       # Svelte stores
+│   └── utils/        # Utility functions
+└── routes/           # SvelteKit routes
+    ├── +page.svelte  # Login page
+    └── stories/      # Main story tracking page
+```
+
+## Contributing
+
+This is an open-source project. Contributions are welcome! Please feel free to:
+
+- Report bugs
+- Suggest features
+- Submit pull requests
+- Review the code
+
+## License
+
+This project is licensed under the MIT License.
+
+Copyright (c) 2024 Markwart v. Bonin
+
+See the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with the official [Guild Wars 2 API](https://wiki.guildwars2.com/wiki/API:Main)
+- Icons from [Guild Wars 2 Wiki](https://wiki.guildwars2.com/)
+- Inspired by tools like GW2Efficiency and GW2Toolkit
+
+## Support
+
+For issues, questions, or contributions, please open an issue on the GitHub repository.
+
+---
+
+**Note**: This is a personal utility tool, not an official Guild Wars 2 service. All game data is provided by ArenaNet's official API.
