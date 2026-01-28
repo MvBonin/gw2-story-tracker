@@ -11,6 +11,7 @@
 	import { browser } from '$app/environment';
 	import { getCookieConsent } from '$lib/utils/cookieConsent';
 	import { clearPersonalStoryCache } from '$lib/utils/personalStoryLoader';
+	import { getProfessionIcon } from '$lib/utils/professionIcons';
 	import favicon from '$lib/assets/favicon.png';
 
 	// Login state
@@ -30,6 +31,8 @@
 	let storiesError = $state<string | null>(null);
 	let currentApiKey = $state<string | null>(null);
 	let lastSuccessfulLoadAt = $state<number | null>(null);
+	let selectedCharacter = $state<string | null>(null);
+	let showFilterPanel = $state(false);
 
 	const getLastLoadStorageKey = (apiKey: string) => `gw2_last_success_load_${apiKey}`;
 	const readLastSuccessfulLoad = (apiKey: string) => {
@@ -236,6 +239,11 @@
 		apiKeyStore.clear();
 		// No redirect needed - the store subscription will trigger the login view
 	}
+
+	// Filtered story progress based on selected character
+	let filteredStoryProgress = $derived(
+		storyProgress.filter((sp) => !selectedCharacter || sp.completedBy.includes(selectedCharacter))
+	);
 </script>
 
 {#if !hasValidApiKey}
@@ -389,20 +397,60 @@
 								</p>
 							</div>
 						</div>
-						<button class="btn btn-ghost btn-sm" onclick={handleReload} disabled={!currentApiKey || isStoriesLoading}>
-							{#if isStoriesLoading}
-								<span class="loading loading-spinner loading-sm"></span>
-							{:else}
-								Reload
-							{/if}
-						</button>
+						<div class="flex items-center gap-2">
+							<button class="btn btn-ghost btn-sm" onclick={() => (showFilterPanel = !showFilterPanel)}>
+								Filter
+							</button>
+							<button class="btn btn-ghost btn-sm" onclick={handleReload} disabled={!currentApiKey || isStoriesLoading}>
+								{#if isStoriesLoading}
+									<span class="loading loading-spinner loading-sm"></span>
+								{:else}
+									Reload
+								{/if}
+							</button>
+						</div>
 					</div>
-					<StoryAccordion {storyProgress} {seasons} {allCharacters} {characterDetails} {characterQuests} />
+					{#if showFilterPanel}
+						<div class="w-full mt-4 pt-4 border-t border-base-300 mb-4">
+							<form class="filter">
+								<label class="btn btn-sm">
+									<input
+										type="radio"
+										name="character-filter"
+										checked={selectedCharacter === null}
+										onclick={() => (selectedCharacter = null)}
+									/>
+									Alle
+								</label>
+								{#each allCharacters as characterName (characterName)}
+									{@const character = characterDetails.get(characterName)}
+									{@const professionIcon = character ? getProfessionIcon(character.profession) : null}
+									<label class="btn btn-sm flex items-center gap-2">
+										<input
+											type="radio"
+											name="character-filter"
+											checked={selectedCharacter === characterName}
+											onclick={() => (selectedCharacter = characterName)}
+										/>
+										{#if professionIcon}
+											<img src={professionIcon} alt={character?.profession || ''} class="w-4 h-4" />
+										{/if}
+										<span>{characterName}</span>
+									</label>
+								{/each}
+							</form>
+						</div>
+					{/if}
+					<StoryAccordion storyProgress={filteredStoryProgress} {seasons} {allCharacters} {characterDetails} {characterQuests} />
 				</div>
 			{/if}
 		</div>
 	</div>
 {/if}
+
+
+
+
 
 
 

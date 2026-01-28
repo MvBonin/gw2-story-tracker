@@ -69,38 +69,42 @@
 		.map(Number)
 		.sort((a, b) => a - b);
 
-	// Erstelle Map von Season-ID zu Season für schnellen Zugriff
-	const seasonMap = new Map((seasons || []).map((s) => [s.id, s]));
+	// Erstelle Map von Season-ID zu Season für schnellen Zugriff (reaktiv)
+	const seasonMap = $derived(new Map((seasons || []).map((s) => [s.id, s])));
 
-	// Gruppiere Stories nach Season-ID
-	const groupedBySeason = new Map<string, StoryProgress[]>();
-	
-	for (const sp of storyProgress || []) {
-		const seasonId = sp.story?.seasonId;
-		if (seasonId) {
-			if (!groupedBySeason.has(seasonId)) {
-				groupedBySeason.set(seasonId, []);
+	// Gruppiere Stories nach Season-ID (reaktiv)
+	const groupedBySeason = $derived.by(() => {
+		const map = new Map<string, StoryProgress[]>();
+		for (const sp of storyProgress || []) {
+			const seasonId = sp.story?.seasonId;
+			if (seasonId) {
+				if (!map.has(seasonId)) {
+					map.set(seasonId, []);
+				}
+				map.get(seasonId)!.push(sp);
 			}
-			groupedBySeason.get(seasonId)!.push(sp);
 		}
-	}
+		return map;
+	});
 
-	// Sortiere Seasons nach order
-	const sortedSeasons = Array.from(groupedBySeason.keys())
-		.map((seasonId) => {
-			const season = seasonMap.get(seasonId);
-			if (season) {
-				return season;
-			}
-			// Fallback: Erstelle ein temporäres Season-Objekt für unbekannte Seasons
-			return {
-				id: seasonId,
-				name: `Unknown Season (${seasonId.substring(0, 8)}...)`,
-				order: 9999,
-				stories: []
-			} as Season;
-		})
-		.sort((a, b) => a.order - b.order);
+	// Sortiere Seasons nach order (reaktiv)
+	const sortedSeasons = $derived.by(() => {
+		return Array.from(groupedBySeason.keys())
+			.map((seasonId) => {
+				const season = seasonMap.get(seasonId);
+				if (season) {
+					return season;
+				}
+				// Fallback: Erstelle ein temporäres Season-Objekt für unbekannte Seasons
+				return {
+					id: seasonId,
+					name: `Unknown Season (${seasonId.substring(0, 8)}...)`,
+					order: 9999,
+					stories: []
+				} as Season;
+			})
+			.sort((a, b) => a.order - b.order);
+	});
 </script>
 
 <div class="space-y-3">
@@ -155,7 +159,7 @@
 								{/if}
 								
 								<!-- Season Badge (gold, pill-shaped) -->
-								<span class="badge badge-primary badge-lg rounded-full px-3 py-1.5 flex-shrink-0">
+								<span class="badge badge-primary badge-lg rounded-full px-3 py-1.5 flex-shrink-0 w-24">
 									{badgeLabel}
 								</span>
 								
