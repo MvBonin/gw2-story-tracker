@@ -15,7 +15,7 @@
 <div class="w-full">
 	<div class="mb-4">
 		<div class="flex justify-between items-center mb-2">
-			<span class="text-sm font-medium">Fortschritt</span>
+			<span class="text-sm font-medium">Progress</span>
 			<span class="text-sm opacity-60">{Math.round(progress.overallProgress)}%</span>
 		</div>
 		<progress

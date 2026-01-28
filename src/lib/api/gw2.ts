@@ -47,6 +47,13 @@ export interface AccountAchievement {
 	unlocked?: boolean;
 }
 
+export interface Quest {
+	id: number;
+	name: string;
+	level: number;
+	story?: number;
+}
+
 /**
  * Validiert einen GW2 API Key
  */

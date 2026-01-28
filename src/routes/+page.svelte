@@ -23,7 +23,7 @@
 
 	async function handleSubmit() {
 		if (!apiKeyInput.trim()) {
-			errorMessage = 'Bitte gib einen API Key ein';
+			errorMessage = 'Please enter an API key';
 			return;
 		}
 
@@ -37,14 +37,14 @@
 			if (tokenInfo) {
 				apiKeyStore.setKey(apiKeyInput.trim());
 				apiKeyStore.setValid(true);
-				// Redirect zur Hauptseite
+				// Redirect to main page
 				goto('/stories');
 			} else {
-				errorMessage = 'Ungültiger API Key. Bitte überprüfe deinen Key.';
+				errorMessage = 'Invalid API key. Please check your key.';
 				apiKeyStore.setError(errorMessage);
 			}
 		} catch (error) {
-			errorMessage = 'Fehler beim Validieren des API Keys. Bitte versuche es erneut.';
+			errorMessage = 'Error validating API key. Please try again.';
 			apiKeyStore.setError(errorMessage);
 			console.error('API Key validation error:', error);
 		} finally {
@@ -54,12 +54,19 @@
 
 </script>
 
-<div class="min-h-screen flex items-center justify-center bg-base-200 p-4">
+	<div class="min-h-screen flex items-center justify-center bg-base-200 p-4">
 	<div class="card w-full max-w-md bg-base-100 shadow-xl">
 		<div class="card-body">
-			<h2 class="card-title justify-center text-2xl mb-4">GW2 Story Tracker</h2>
+			<div class="flex items-center justify-center gap-3 mb-4">
+				<img
+					src="https://wiki.guildwars2.com/wiki/Special:FilePath/Storyline_(interface).png"
+					alt="GW2 Storyline"
+					class="w-10 h-10"
+				/>
+				<h2 class="card-title text-2xl">GW2 Story Tracker</h2>
+			</div>
 			<p class="text-center text-base-content/70 mb-6">
-				Gib deinen Guild Wars 2 API Key ein, um deine Story-Fortschritte zu sehen.
+				Enter your Guild Wars 2 API key to view your story progress.
 			</p>
 
 			<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-4">
@@ -69,7 +76,7 @@
 					</label>
 					<input
 						type="password"
-						placeholder="Dein GW2 API Key"
+						placeholder="Your GW2 API Key"
 						class="input input-bordered w-full"
 						bind:value={apiKeyInput}
 						disabled={isLoading}
@@ -82,7 +89,7 @@
 								rel="noopener noreferrer"
 								class="link link-primary"
 							>
-								API Key erstellen
+								Create API Key
 							</a>
 						</span>
 					</label>
@@ -111,9 +118,9 @@
 					<button type="submit" class="btn btn-primary w-full" disabled={isLoading}>
 						{#if isLoading}
 							<span class="loading loading-spinner loading-sm"></span>
-							Validierung...
+							Validating...
 						{:else}
-							Validieren
+							Validate
 						{/if}
 					</button>
 				</div>

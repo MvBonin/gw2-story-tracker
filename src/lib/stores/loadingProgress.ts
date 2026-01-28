@@ -13,10 +13,10 @@ export interface LoadingProgress {
 }
 
 const initialSteps: LoadingStep[] = [
-	{ id: 'characters', label: 'Lade Charakter-Liste...', status: 'pending' },
-	{ id: 'achievements', label: 'Lade Account-Achievements...', status: 'pending' },
-	{ id: 'stories', label: 'Lade Story-Details...', status: 'pending' },
-	{ id: 'mapping', label: 'Mappe Story-Fortschritt...', status: 'pending' }
+	{ id: 'characters', label: 'Loading character list...', status: 'pending' },
+	{ id: 'achievements', label: 'Loading character quests...', status: 'pending' },
+	{ id: 'stories', label: 'Loading story details...', status: 'pending' },
+	{ id: 'mapping', label: 'Mapping story progress...', status: 'pending' }
 ];
 
 function createLoadingProgressStore() {

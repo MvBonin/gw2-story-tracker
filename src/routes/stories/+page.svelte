@@ -2,9 +2,11 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { apiKeyStore } from '$lib/stores/apiKey';
-	import { getCharacters, getAllCharacterQuests, getAllCharacterDetails, type Character } from '$lib/api/gw2';
+	import { getCharacters, getAllCharacterQuests, getAllCharacterDetails, getAllQuestIds, getAllQuestDetails, type Character, type Quest } from '$lib/api/gw2';
 	import { getStoriesAndSeasons, type Season } from '$lib/api/stories';
 	import { mapStoryProgress } from '$lib/utils/storyProgress';
+	import { getQuestToStoryMap } from '$lib/api/questMapping';
+	import { createPersonalStoryProgress, type PersonalStoryPhaseProgress } from '$lib/utils/personalStoryProgress';
 	import { loadingProgressStore } from '$lib/stores/loadingProgress';
 	import type { StoryProgress } from '$lib/utils/storyProgress';
 	import StoryAccordion from '$lib/components/StoryAccordion.svelte';
@@ -14,6 +16,7 @@
 	let seasons: Season[] = [];
 	let allCharacters: string[] = [];
 	let characterDetails: Map<string, Character> = new Map();
+	let personalStoryPhases: PersonalStoryPhaseProgress[] = [];
 	let isLoading = true;
 	let error: string | null = null;
 
@@ -59,12 +62,27 @@
 			seasons = loadedSeasons;
 			loadingProgressStore.setStepCompleted('stories');
 
-			// Schritt 4: Mappe Story-Fortschritt basierend auf Character-Quests (live)
+			// Schritt 4: Lade Quest-Details für Personal Story
 			loadingProgressStore.setStepLoading('mapping');
+			const questToStory = await getQuestToStoryMap();
+			const allQuestIds = await getAllQuestIds();
+			const allQuestDetails = await getAllQuestDetails(allQuestIds);
+			
+			// Filtere nur Personal Story Quests (Story ID 1)
+			const personalStoryQuestDetails = allQuestDetails.filter((q: Quest) => questToStory.get(q.id) === 1);
+			
+			// Erstelle Personal Story Progress
+			personalStoryPhases = createPersonalStoryProgress(
+				characterQuests,
+				personalStoryQuestDetails,
+				questToStory
+			);
+			
+			// Schritt 5: Mappe Story-Fortschritt basierend auf Character-Quests (live)
 			storyProgress = await mapStoryProgress(apiKey, characterQuests);
 			loadingProgressStore.setStepCompleted('mapping');
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Fehler beim Laden der Daten';
+			error = err instanceof Error ? err.message : 'Error loading data';
 			console.error('Error loading story data:', err);
 			console.error('Error details:', {
 				message: err instanceof Error ? err.message : String(err),
@@ -87,7 +105,14 @@
 	<!-- Navbar -->
 	<div class="navbar bg-base-100/80 backdrop-blur-sm shadow-lg border-b border-base-300">
 		<div class="flex-1">
-			<span class="btn btn-ghost text-xl font-semibold">GW2 Story Tracker</span>
+			<div class="flex items-center gap-3">
+				<img
+					src="https://wiki.guildwars2.com/wiki/Special:FilePath/Storyline_(interface).png"
+					alt="GW2 Storyline"
+					class="w-8 h-8"
+				/>
+				<span class="btn btn-ghost text-xl font-semibold">GW2 Story Tracker</span>
+			</div>
 		</div>
 		<div class="flex-none">
 			<button class="btn btn-ghost" on:click={handleLogout}>Logout</button>
@@ -98,7 +123,7 @@
 	<div class="container mx-auto px-4 py-6 max-w-[1000px]">
 		{#if isLoading}
 			<div class="bg-base-100/50 backdrop-blur-sm rounded-lg shadow-lg p-6 mt-4 border border-base-300">
-				<h2 class="text-2xl font-bold mb-4">Lade Story-Daten...</h2>
+				<h2 class="text-2xl font-bold mb-4">Loading story data...</h2>
 				<LoadingProgress />
 			</div>
 		{:else if error}
@@ -119,13 +144,13 @@
 				<span>{error}</span>
 				<div class="flex-1"></div>
 				<button class="btn btn-sm btn-ghost" on:click={() => window.location.reload()}>
-					Erneut versuchen
+					Try again
 				</button>
 			</div>
 		{:else}
 			<div class="bg-base-100/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-base-300">
 				<h2 class="text-2xl font-bold mb-6 text-base-content">Stories</h2>
-				<StoryAccordion {storyProgress} {seasons} {allCharacters} {characterDetails} />
+				<StoryAccordion {storyProgress} {seasons} {allCharacters} {characterDetails} {personalStoryPhases} />
 			</div>
 		{/if}
 	</div>

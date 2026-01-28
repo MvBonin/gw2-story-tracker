@@ -2,17 +2,21 @@
 	import type { StoryProgress } from '$lib/utils/storyProgress';
 	import type { Season } from '$lib/api/stories';
 	import type { Character } from '$lib/api/gw2';
+	import type { PersonalStoryPhaseProgress } from '$lib/utils/personalStoryProgress';
 	import { getSeasonBadgeLabel, getSeasonMasteryIcon } from '$lib/utils/seasonLabels';
+	import { PERSONAL_STORY_SEASON_ID } from '$lib/utils/personalStoryPhases';
 	import StoryItem from './StoryItem.svelte';
+	import PersonalStoryPhase from './PersonalStoryPhase.svelte';
 
 	interface Props {
 		storyProgress: StoryProgress[];
 		seasons: Season[];
 		allCharacters?: string[];
 		characterDetails?: Map<string, Character>;
+		personalStoryPhases?: PersonalStoryPhaseProgress[];
 	}
 
-	let { storyProgress, seasons, allCharacters = [], characterDetails = new Map() }: Props = $props();
+	let { storyProgress, seasons, allCharacters = [], characterDetails = new Map(), personalStoryPhases = [] }: Props = $props();
 
 	// Erstelle Map von Season-ID zu Season für schnellen Zugriff
 	const seasonMap = new Map((seasons || []).map((s) => [s.id, s]));
@@ -51,19 +55,25 @@
 <div class="space-y-3">
 	{#if sortedSeasons.length === 0}
 		<div class="alert alert-info">
-			<span>Keine Stories gefunden. Bitte lade die Seite neu.</span>
+			<span>No stories found. Please reload the page.</span>
 		</div>
 	{:else}
 		{#each sortedSeasons as season (season.id)}
+			{@const isPersonalStory = season.id === PERSONAL_STORY_SEASON_ID}
 			{@const seasonProgress = groupedBySeason.get(season.id) || []}
 			{@const sortedSeasonProgress = seasonProgress.sort((a, b) => a.story.order - b.story.order)}
-			{@const completedCount = sortedSeasonProgress.filter((sp) => sp.completedBy.length > 0).length}
-			{@const totalCount = sortedSeasonProgress.length}
-			{@const isComplete = completedCount === totalCount && totalCount > 0}
 			{@const badgeLabel = getSeasonBadgeLabel(season)}
 			{@const masteryIcon = getSeasonMasteryIcon(season.id)}
+			
+			{@const totalQuests = isPersonalStory ? personalStoryPhases.reduce((sum, phase) => sum + phase.quests.length, 0) : 0}
+			{@const completedQuests = isPersonalStory ? personalStoryPhases.reduce((sum, phase) => sum + phase.quests.filter(q => q.completedBy.length > 0).length, 0) : 0}
+			{@const completedCount = !isPersonalStory ? sortedSeasonProgress.filter((sp) => sp.completedBy.length > 0).length : 0}
+			{@const totalCount = !isPersonalStory ? sortedSeasonProgress.length : 0}
+			{@const isComplete = isPersonalStory 
+				? (completedQuests === totalQuests && totalQuests > 0)
+				: (completedCount === totalCount && totalCount > 0)}
 
-			{#if sortedSeasonProgress.length > 0}
+			{#if (isPersonalStory && personalStoryPhases.length > 0) || (!isPersonalStory && sortedSeasonProgress.length > 0)}
 				<div class="collapse collapse-arrow bg-base-200/50 shadow-sm rounded-lg">
 					<input type="checkbox" />
 					<div class="collapse-title text-lg font-medium">
@@ -92,16 +102,28 @@
 							
 							<!-- Progress -->
 							<span class="text-sm {isComplete ? 'text-success' : 'opacity-60'} flex-shrink-0">
-								{completedCount} / {totalCount} completed
+								{#if isPersonalStory}
+									{completedQuests} / {totalQuests} completed
+								{:else}
+									{completedCount} / {totalCount} completed
+								{/if}
 							</span>
 						</div>
 					</div>
 					<div class="collapse-content">
-						<div class="pt-2 pb-2 px-1 space-y-0.5">
-							{#each sortedSeasonProgress as sp (sp.story.id)}
-								<StoryItem storyProgress={sp} {allCharacters} {characterDetails} />
-							{/each}
-						</div>
+						{#if isPersonalStory}
+							<div class="pt-2 pb-2 px-1 space-y-2">
+								{#each personalStoryPhases as phase}
+									<PersonalStoryPhase {phase} {characterDetails} />
+								{/each}
+							</div>
+						{:else}
+							<div class="pt-2 pb-2 px-1 space-y-0.5">
+								{#each sortedSeasonProgress as sp (sp.story.id)}
+									<StoryItem storyProgress={sp} {allCharacters} {characterDetails} />
+								{/each}
+							</div>
+						{/if}
 					</div>
 				</div>
 			{/if}
