@@ -1,0 +1,48 @@
+@import "tailwindcss";
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+  name: "gw2";
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+
+  /* === Base surfaces === */
+  --color-base-100: #0e0b1a;   /* deep arcane purple-black */
+  --color-base-200: #16122a;
+  --color-base-300: #1f1a38;
+  --color-base-content: #e8e6f2;
+
+  /* === Primary (legendary / gold) === */
+  --color-primary: #d4af37;    /* legendary gold */
+  --color-primary-content: #120f05;
+
+  /* === Secondary (arcane violet) === */
+  --color-secondary: #8b5cf6;  /* violet glow */
+  --color-secondary-content: #0b0416;
+
+  /* === Accent (cyan magic highlight) === */
+  --color-accent: #38bdf8;
+  --color-accent-content: #020617;
+
+  /* === Neutral === */
+  --color-neutral: #221f3d;
+  --color-neutral-content: #dcdaf0;
+
+  /* === State colors === */
+  --color-success: #22c55e;    /* completed */
+  --color-success-content: #052e16;
+
+  --color-warning: #f59e0b;    /* partial / undetectable */
+  --color-warning-content: #2e1b05;
+
+  --color-error: #ef4444;
+  --color-error-content: #2b0505;
+
+  --color-info: #60a5fa;
+  --color-info-content: #020617;
+
+  /* === Shape & density === */
+  --radius-box: 0.75rem;
+  --radius-btn: 0.5rem;
+  --border-size: 1px;
+}
