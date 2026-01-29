@@ -181,9 +181,9 @@
 	function formatLastLoad(ts: number | null): string {
 		if (!ts) return '—';
 		try {
-			return new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ts));
+			return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ts));
 		} catch {
-			return new Date(ts).toLocaleString();
+			return new Date(ts).toLocaleString('en-US');
 		}
 	}
 
@@ -394,7 +394,7 @@
 							<div>
 								<h2 class="text-2xl font-bold text-base-content">Stories</h2>
 								<p class="text-sm text-base-content/70 mt-1">
-									Zuletzt geladen: {formatLastLoad(lastSuccessfulLoadAt)}
+									Last loaded: {formatLastLoad(lastSuccessfulLoadAt)}
 								</p>
 							</div>
 						</div>
@@ -421,7 +421,7 @@
 										checked={selectedCharacter === null}
 										onclick={() => (selectedCharacter = null)}
 									/>
-									Alle
+									All
 								</label>
 								{#each allCharacters as characterName (characterName)}
 									{@const character = characterDetails.get(characterName)}

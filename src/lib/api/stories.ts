@@ -3,6 +3,14 @@ import { cached } from '$lib/utils/cache';
 
 const GW2_API_BASE = 'https://api.guildwars2.com/v2';
 
+/**
+ * Fügt den lang=en Parameter zu einer URL hinzu
+ */
+function addLangParam(url: string): string {
+	const separator = url.includes('?') ? '&' : '?';
+	return `${url}${separator}lang=en`;
+}
+
 // Neue Interfaces für API-basierte Story-Verwaltung
 export interface Story {
 	id: number;
@@ -32,12 +40,12 @@ export interface LegacyStory {
  * Holt Stories und Seasons parallel von der GW2 API
  */
 export async function getStoriesAndSeasons(forceRefresh = false): Promise<{ stories: Story[]; seasons: Season[] }> {
-	return cached(
+		return cached(
 		'stories_and_seasons',
 		async () => {
 			const [storiesRes, seasonsRes] = await Promise.all([
-				fetch(`${GW2_API_BASE}/stories?ids=all`),
-				fetch(`${GW2_API_BASE}/stories/seasons?ids=all`)
+				fetch(addLangParam(`${GW2_API_BASE}/stories?ids=all`)),
+				fetch(addLangParam(`${GW2_API_BASE}/stories/seasons?ids=all`))
 			]);
 
 			if (!storiesRes.ok) {

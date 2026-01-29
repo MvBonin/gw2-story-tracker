@@ -2,6 +2,14 @@ import { cached, getCache, setCache } from '$lib/utils/cache';
 
 const GW2_API_BASE = 'https://api.guildwars2.com/v2';
 
+/**
+ * Fügt den lang=en Parameter zu einer URL hinzu
+ */
+function addLangParam(url: string): string {
+	const separator = url.includes('?') ? '&' : '?';
+	return `${url}${separator}lang=en`;
+}
+
 export interface TokenInfo {
 	id: string;
 	name: string;
@@ -59,7 +67,7 @@ export interface Quest {
  */
 export async function validateApiKey(apiKey: string): Promise<TokenInfo | null> {
 	try {
-		const response = await fetch(`${GW2_API_BASE}/tokeninfo?access_token=${apiKey}`);
+		const response = await fetch(addLangParam(`${GW2_API_BASE}/tokeninfo?access_token=${apiKey}`));
 		
 		if (!response.ok) {
 			return null;
@@ -78,7 +86,7 @@ export async function validateApiKey(apiKey: string): Promise<TokenInfo | null> 
  */
 export async function getAccountInfo(apiKey: string): Promise<any> {
 	try {
-		const response = await fetch(`${GW2_API_BASE}/account?access_token=${apiKey}`);
+		const response = await fetch(addLangParam(`${GW2_API_BASE}/account?access_token=${apiKey}`));
 		
 		if (!response.ok) {
 			throw new Error('Failed to fetch account info');
@@ -95,11 +103,11 @@ export async function getAccountInfo(apiKey: string): Promise<any> {
  * Holt die Liste aller Charaktere (mit Caching)
  */
 export async function getCharacters(apiKey: string, forceRefresh = false): Promise<string[]> {
-	return cached(
+		return cached(
 		`characters_${apiKey}`,
 		async () => {
 			try {
-				const response = await fetch(`${GW2_API_BASE}/characters?access_token=${apiKey}`);
+				const response = await fetch(addLangParam(`${GW2_API_BASE}/characters?access_token=${apiKey}`));
 				
 				if (!response.ok) {
 					throw new Error('Failed to fetch characters');
@@ -122,7 +130,7 @@ export async function getCharacterDetails(apiKey: string, characterName: string)
 	try {
 		const encodedName = encodeURIComponent(characterName);
 		const response = await fetch(
-			`${GW2_API_BASE}/characters/${encodedName}?access_token=${apiKey}`
+			addLangParam(`${GW2_API_BASE}/characters/${encodedName}?access_token=${apiKey}`)
 		);
 		
 		if (!response.ok) {
@@ -199,11 +207,11 @@ export async function getAllCharacterDetails(
  * Holt Account-Achievements (mit Caching)
  */
 export async function getAccountAchievements(apiKey: string, forceRefresh = false): Promise<AccountAchievement[]> {
-	return cached(
+		return cached(
 		`account_achievements_${apiKey}`,
 		async () => {
 			try {
-				const response = await fetch(`${GW2_API_BASE}/account/achievements?access_token=${apiKey}`);
+				const response = await fetch(addLangParam(`${GW2_API_BASE}/account/achievements?access_token=${apiKey}`));
 				
 				if (!response.ok) {
 					throw new Error('Failed to fetch account achievements');
@@ -227,7 +235,7 @@ export async function getAchievementDetails(achievementIds: number[]): Promise<A
 		if (achievementIds.length === 0) return [];
 
 		const idsParam = achievementIds.join(',');
-		const response = await fetch(`${GW2_API_BASE}/achievements?ids=${idsParam}`);
+		const response = await fetch(addLangParam(`${GW2_API_BASE}/achievements?ids=${idsParam}`));
 		
 		if (!response.ok) {
 			throw new Error('Failed to fetch achievement details');
@@ -258,7 +266,7 @@ export async function getCharacterQuests(
 			try {
 				const encodedName = encodeURIComponent(characterName);
 				const response = await fetch(
-					`${GW2_API_BASE}/characters/${encodedName}/quests?access_token=${apiKey}`
+					addLangParam(`${GW2_API_BASE}/characters/${encodedName}/quests?access_token=${apiKey}`)
 				);
 				
 				if (!response.ok) {
@@ -328,11 +336,11 @@ export async function getAllCharacterQuests(
  * Gibt eine Liste aller verfügbaren Quest-IDs zurück
  */
 export async function getAllQuestIds(forceRefresh = false): Promise<number[]> {
-	return cached(
+		return cached(
 		'all_quest_ids',
 		async () => {
 			try {
-				const response = await fetch(`${GW2_API_BASE}/quests`);
+				const response = await fetch(addLangParam(`${GW2_API_BASE}/quests`));
 
 				if (!response.ok) {
 					throw new Error('Failed to fetch all quest IDs');
@@ -369,7 +377,7 @@ export async function getAllQuestDetails(
 			for (let i = 0; i < questIds.length; i += batchSize) {
 				const batch = questIds.slice(i, i + batchSize);
 				try {
-					const response = await fetch(`${GW2_API_BASE}/quests?ids=${batch.join(',')}`);
+					const response = await fetch(addLangParam(`${GW2_API_BASE}/quests?ids=${batch.join(',')}`));
 
 					if (!response.ok) {
 						console.warn(`Failed to fetch quest batch ${i}-${i + batchSize}`);
